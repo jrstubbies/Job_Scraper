@@ -25,7 +25,7 @@ job_cards = results.find_all('div', class_='job_seen_beacon')
 # page 8 would be https....start=7
 for job in job_cards:
     job_title = job.find("h2", class_=lambda text: "jobTitle" in text)
-    job_link = job_title.find("a")
+    job_link = job_title.find("a")                                                          # IS NOT GETTING THE CORRECT LINK !!!!
     job_title_url = job_link["href"]
     print(job_title.text)
     print(f"Job URL: {job_title_url}\n")
