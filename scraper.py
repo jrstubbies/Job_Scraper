@@ -4,9 +4,14 @@ from selenium import webdriver      # as page is dynamic, use selenium to scrape
 from selenium.webdriver.chrome.options import Options
 import time
 
+
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
+
 # prevents error about not finding usb drive ?????   -> "--headless=new" stops program working
 driver_options = Options()
 driver_options.add_argument("--log-level=3")
+driver_options.add_argument(f"user-agent={user_agent}")
 
 
 # setup for webdriver to render 'indeed.com' where the search is for 'software developer' in 'New Zealand'
@@ -15,7 +20,7 @@ URL = "https://nz.indeed.com/jobs?q=software+developer&l=New+Zealand"
 driver = webdriver.Chrome(options = driver_options)
 driver.get(URL)
 
-time.sleep(1)   #sleep to allow the results to fully load
+time.sleep(10)   #sleep to allow the results to fully load
 
 
 # use '.content' instead of '.text' as it holds raw bytes. Close the web driver
@@ -35,26 +40,27 @@ for job in job_cards:
 
     # h2 class will have the job name, which is also a link to the full job listing
     job_title = job.find("h2", class_=lambda text: "jobTitle" in text)
-    job_link = job_title.find("a")           
 
-    # need to add the domain to this url                                              
-    job_title_url = "https://nz.indeed.com" + job_link["href"]
+    company_container = job.find('a', {'class': 'css-1ioi40n e19afand0'})
+    company = company_container.text.strip() if company_container else None
 
-    # use driver to scrape each of these job pages
-    driver.get(job_title_url)
-    soup2 = BeautifulSoup(driver.page_source, "html.parser")
+    location_container = job.find('div', {'data-testid': 'inlineHeader-companyLocation'})
+    location = location_container.div.text.strip() if location_container else 'Remote or Unknown'
 
-    # now scraping the information for each of the job pages
-    job_company = soup2.find('a', {'class': 'css-1ioi40n e19afand0'})
-    company_text = job_company.text.strip() if job_company else None        # doesnt work at this point
+    apply_container = job.find('div', class_ = 'css-199trha eu4oa1w0')
+    apply_link = apply_container.find("button")
+    apply_url = apply_link["href"]
 
-    job_location = soup2.find('div', {'data-testid': 'inlineHeader-companyLocation'})
-    location_text = job_location.div.text.strip() if job_location else None
+    description_container = job.find(id="jobDescriptionText")
+    description = description_container.text.strip()
+
 
     print(job_title.text)
     #print(f"Job URL: {job_title_url}\n")
-    print(company_text)
-    print(location_text)
+    print(company)
+    print(location)
+    print(apply_url)
+    print(description)
     print()
 
 driver.quit()
