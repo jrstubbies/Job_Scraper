@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver      # as page is dynamic, use selenium to scrape the rendered page
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 import time
 import random
 
@@ -48,22 +49,43 @@ for job in job_cards:
     location_container = job.find('div', {'data-testid': 'inlineHeader-companyLocation'})
     location = location_container.div.text.strip() if location_container else 'Remote or Unknown'
 
-    # get the link for the apply button. This requires a login 
-    apply_container = job.find('div', class_ = 'css-199trha eu4oa1w0')
-    apply_link = apply_container.find("button")
-    apply_url = apply_link["href"]
 
-    # get the job's description
-    description_container = job.find(id="jobDescriptionText")
-    description = description_container.text.strip()
+    # find the h2 element, want Selenium to click this element so that right pane opens up tp search for details.
+    job_title_element = driver.find_element(By.XPATH, "//h2[contains(@class, 'jobTitle')]")
+    link_to_click = job_title_element.find_element(By.TAG_NAME, "a")
+    link_to_click.click()
+
+    # the container for the right side pop-up containing detailed version of the job. Needs to click job to open
+    right_pane_container = soup.find('div', id='jobsearch-ViwjobPaneWrapper')
+#-----------------------------------------------------------------------------------------------------------------------------
+    # GET THE APPLY BUTTON LINK ??
+    apply_container = right_pane_container.find('div', id='applyButtonLinkContainer')
+    if apply_container:
+        apply_button = apply_container.find('button')
+        if apply_button:
+            apply_link = apply_button.get('href')
+        else:
+            apply_button = "no apply button found"
+            apply_link = "no link found"
+    else:
+        apply_container = "no apply container found"
+        apply_link = "not found the apply link container"
+
+
+    # GET THE JOB DESCRIPTION ???
+    description_container = right_pane_container.find('div', id='jobDescriptionText')
+    if description_container:
+        description_text = description_container.get_text(separator='\n').strip()
+    else:
+        description_container = "no desc container found"
+        description_text = "not found description"
 
     # print all this information to the console. Change this to print to a file????
     print(job_title.text)
-    #print(f"Job URL: {job_title_url}\n")
     print(company)
     print(location)
-    print(apply_url)
-    print(description)
+    print(apply_link)
+    print(description_text)
     print()
 
     # helps prevent sending multiple requests in quick succession, helps avoid authentication issues ??
